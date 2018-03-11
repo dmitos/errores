@@ -2,7 +2,7 @@ import csv
 
 
 Funcionario = []
-ArFunDiff = open('diferencias_SS_siap_bps.csv', 'w')
+ArFunDiff = open('diferencias_SS_siap_bps.csv', 'w', newline='')
 ArSiap = ('designaciones.csv')
 ArBPS = ('nominabps.csv')
 
@@ -10,7 +10,7 @@ ArBPS = ('nominabps.csv')
 def CortarSSyCE(ss, ce):
     SeguroSalud = ss.split(" ")
     ComputoEspecial = ce.split(" ")
-    SSCE = [SeguroSalud, ComputoEspecial]
+    SSCE = [SeguroSalud[0], ComputoEspecial[0]]
     '''
     devuelve tupla con:
     datos[0][0] = numero seguro de salud
@@ -20,12 +20,13 @@ def CortarSSyCE(ss, ce):
 
 
 def NomSector(s):
-    sector = s.split("-")
+    espacios = s.strip()
+    sector = espacios.split("-")
     '''
     devuelve tupla con
     datos[1] = lugar o servicio
     '''
-    return sector
+    return sector[1]
 
 
 def BorrarEspacios(ci):
@@ -42,15 +43,15 @@ def ArchivoDesignaciones(ad, ab):
             nfAD = cf[2]
             nfAD = nfAD[0:15]
             ssce = CortarSSyCE(cf[15], cf[16])
-            ssAD = ssce[0][0]
-            ceAD = ssce[1][0]
+            ssAD = ssce[0]
+            ceAD = ssce[1]
             secAD = NomSector(cf[13])
             alAD = cf[22]
             count = 0
             with open(ab, 'r') as bps:
                 leerbps = csv.reader(bps)
                 for cbps in leerbps:
-                    cibps = str(BorrarEspacios(cbps[4]))
+                    cibps = cbps[4]
                     ssbps = cbps[20]
                     cebps = cbps[18]
                     if ciAD == cibps and alAD == "27":
@@ -59,31 +60,29 @@ def ArchivoDesignaciones(ad, ab):
                             # print(fila[0], " -> ", nfAD, " ok")
                             count = count + 1
                         elif ceAD == cebps and ssAD != ssbps:
-                            fila = [ciAD, ";", nfAD, ";", ceAD, ";", ssAD,
-                                    ";", ssbps, ";", secAD, ";", "ERR: SS"]
+                            fila = [ciAD, nfAD, ceAD, ssAD, ssbps, secAD,
+                                    "ERR: SS \n"]
                             print(fila[0], " -> ", nfAD, " Error SS")
                             count = count + 1
-                            Funcionario.append(ciAD, nfAD, ssAD, ssbps,
-                                               'err ss')
+                            Funcionario.append(fila)
                         elif ceAD != cebps and ssAD == ssbps:
-                            fila = [ciAD, ";", nfAD, ";", ceAD, ";", ssAD,
-                                    ";", ssbps, ";", secAD, ";", "ERR: CE ver"]
+                            fila = [ciAD, nfAD, ceAD, ssAD, ssbps, secAD,
+                                    "ERR: CE ver \n"]
                             print("ERR: ce ver")
                             count = count + 1
-                            Funcionario.append(ciAD, nfAD, ssAD, ssbps,
-                                               'err CE ver')
+                            Funcionario.append(fila)
                     elif ciAD == cibps and alAD != 27:
                         count = count + 1
                         # print("nadaaaaa")
                 if count == 0:
-                    fila = [ciAD, ";", nfAD, ";", ceAD, ";", ssAD,
-                            ";", ssbps, ";", secAD, ";", "ERR: no bps"]
-                    print(fila[0], " -> ", nfAD, " - ", ssAD, " - ", ssbps,
-                          " -- ", ceAD, " -- ", cebps, " Error sin BPS")
-                    Funcionario.append(ciAD, nfAD, ssAD, ssbps,
-                                       'err BPS')
-        print("termino")
-        ArFunDiff.write(Funcionario)
+                    fila = [ciAD, nfAD, ceAD, ssAD, "----", secAD,
+                            "ERR: no bps \n"]
+                    print(fila[0], " -> ", nfAD, " - ", ssAD, " - ",
+                          " -- ", ceAD, " -- ", " Error sin BPS")
+                    Funcionario.append(fila)
+        print(Funcionario)
+        final = csv.writer(ArFunDiff)
+        final.writerows(Funcionario)
 
 
 ArchivoDesignaciones(ArSiap, ArBPS)
